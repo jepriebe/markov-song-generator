@@ -22,11 +22,9 @@ if not isdir(filefolder):
 
 filepath = ''.join((filefolder, '/', band_name[1], 'lyrics.txt'))
 if not isfile(filepath):
-    # links = fetch_data.get_links(url)
-    # lyrics = fetch_data.get_lyrics(links)
-    # print(lyrics)
-    print('File does not exist')
-    pass
+    print('File does not exist. Fetching lyrics from web.')
+    links = fetch_data.get_links(url)
+    lyrics = fetch_data.get_lyrics(links, band_name[1])
 
 lyrics_markov = MarkovChain()
 lyrics_markov.add_file(filepath)
