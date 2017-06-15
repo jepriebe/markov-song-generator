@@ -103,7 +103,7 @@ def __write_lyrics(lyrics, band_name):
     filename = ''.join((curr_dir, '/original_lyrics/', band_name, 'lyrics.txt'))
     lyrics_string = ' '.join(lyrics)
 
-    with open(filename, 'w') as lf:
+    with open(filename, 'w', encoding='utf-8') as lf:
         if lyrics:
             lf.writelines(lyrics_string)
         else:
