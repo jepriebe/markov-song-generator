@@ -18,7 +18,8 @@ def set_band():
     first letter, alphanumeric-only name, and same with whitespace replaced
     by '+' for lyricsfreak.com urls"""
 
-    band_name = input("Enter the name of the band: ")
+    band_name = input('Enter the name of the band: ')
+    print()
 
     if band_name:
         band_name = band_name.strip()
@@ -115,8 +116,8 @@ def get_lyrics(links, band_name):
     opens each url in sequence, and saves a cleaned string of the lyrics
     to a text file"""
 
-    print('There is a delay between url requests to reduce risk of IP being blocked.\
-This process may take several minutes, depending on the number of songs being retrieved.')
+    print('There is a delay between url requests to reduce risk of IP being blocked.\n\
+This process may take several minutes, depending on the number of songs being retrieved.\n')
 
     user_agent = {'User-Agent': 'Mozilla/5.0 (Windows NT 6.1; WOW64; rv:40.0) Gecko/20100101 Firefox/40.1'}
     lyrics = []
@@ -141,7 +142,7 @@ This process may take several minutes, depending on the number of songs being re
     __write_lyrics(lyrics, band_name)
 
 
-# code for scraping darklyrics.com
+# code for scraping darklyrics.com; contains errors
 '''def build_url(band_name):
     """Builds and returns url string using band_name tuple returned from
     set_band()"""

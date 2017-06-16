@@ -27,7 +27,7 @@ def __fix_lines(lyrics, max_words):
             non_terminal_words = [line[1:] for line in wf.read().splitlines() if line and line[0] == '#']
 
     except OSError:
-        print('Could not find non_terminal_words.txt')
+        print('Could not find non_terminal_words.txt\n')
         exit()
 
     words_to_shift = []
@@ -99,6 +99,7 @@ def save_song(dir, artist, song):
         try:
 
             song_title = input('Enter a song title: ')
+            print()
 
             filefolder = ''.join((dir, '/user_songs/', artist))
             if not isdir(filefolder):
@@ -108,7 +109,7 @@ def save_song(dir, artist, song):
             if exists(filepath):
                 while True:
                     overwrite = input('File already exists. Would you like to overwrite this file (y/n)? ')
-                    print('\n')
+                    print()
 
                     if overwrite.lower() not in 'yn':
                         print('Invalid input\n')

@@ -2,6 +2,7 @@ File defining set of words that cannot act as the final word on a line. Any word
 
 Articles
 #a
+#an
 #the
 
 Prepositions
@@ -34,3 +35,5 @@ Conjunctions
 #and
 #or
 #nor
+
+#no

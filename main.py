@@ -22,7 +22,7 @@ if not isdir(filefolder):
 
 filepath = ''.join((filefolder, '/', band_name[1], 'lyrics.txt'))
 if not isfile(filepath):
-    print('File does not exist. Fetching lyrics from web.')
+    print('File does not exist. Fetching lyrics from web.\n')
     links = fetch_data.get_links(url)
     lyrics = fetch_data.get_lyrics(links, band_name[1])
 
@@ -37,6 +37,7 @@ while True:
 
     option = input('\nEnter S to save and continue, X to exit program, SX to save and exit, \
 or press Enter to continue without saving: ')
+    print()
 
     if 's' in option.lower():
         lyricize.save_song(curr_dir, band_name[1], markov_song)
