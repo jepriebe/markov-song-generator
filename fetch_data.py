@@ -10,7 +10,7 @@ from requests import head
 from bs4 import BeautifulSoup as soup, SoupStrainer as strain
 from numpy.random import choice
 from time import sleep
-from os.path import dirname
+import directories
 
 
 def set_band(website_code):
@@ -26,8 +26,7 @@ def set_band(website_code):
         elif website_code == 'lf':  # lyricsfreak.com
             band_name = re.sub('[^a-zA-Z0-9 ]+', '', band_name).strip()
             band_name = re.sub('[ ]+', '+', band_name).lower()
-        else:
-            print('Unrecognized website code\n')
+
         return band_name
     else:
         return ''
@@ -37,13 +36,12 @@ def build_url(website_code, band_name):
     """Builds and returns url string based on website code and
     band_name tuple returned from set_band()"""
 
+    url = None
+
     if website_code == 'dl':
         url = ''.join(['http://www.darklyrics.com/', band_name[0], '/', band_name, '.html'])
     elif website_code == 'lf':
         url = ''.join(['http://www.lyricsfreak.com/', band_name[0], '/', band_name, '/'])
-    else:
-        print('Unrecognized website code\n')
-        return ''
 
     return url
 
@@ -52,13 +50,16 @@ def url_check(url):
     """Checks to make sure site exists;
     Returns True if status code < 400, False otherwise"""
 
-    site_ping = head(url)
-    if site_ping.status_code < 400:
-        return True
-    else:
-        print('Could not find file or connect to url. Make sure band name entered properly, \
+    try:
+        site_ping = head(url)
+        if site_ping.status_code < 400:
+            return True
+        else:
+            print('Could not find file or connect to url. Make sure band name entered properly, \
 or that the band has a page on the website selected.\n')
-        return False
+            return False
+    except TypeError:
+        print('Url is type None')
 
 
 def get_links(website_code, url):
@@ -75,7 +76,7 @@ def get_links(website_code, url):
     try:
         album_links = choice(album_links, len(album_links), replace=False)
     except TypeError:
-        print('Failed to get links\nWebsite code was invalid\n')
+        print('Failed to get links\n')
     else:
         return album_links
 
@@ -114,7 +115,7 @@ def __get_links_lyricsfreak(html):
 def get_lyrics(website_code, links, band_name):
     """Iterates through a randomized list of links (provided by get_links),
     opens each url in sequence, and saves a cleaned string of the lyrics
-    to a text file"""
+    to a text file. Website code dictates how html is parsed."""
 
     print('There is a delay between url requests to reduce risk of IP being blocked.\n\
 This process may take several minutes, depending on the number of songs being retrieved.\n')
@@ -126,17 +127,18 @@ This process may take several minutes, depending on the number of songs being re
     stdout.flush()
 
     for index, link in enumerate(links):
-        raw_site = urlreq.urlopen(urlreq.Request(link, headers=user_agent))
+        html = urlreq.urlopen(urlreq.Request(link, headers=user_agent))
 
         if website_code == 'dl':
-            pass
+            only_class_album = strain('div', {'class': 'album'})
+            lyrics_soup = soup(html, 'html.parser', parse_only=only_class_album)
         elif website_code == 'lf':
             only_id_content_h = strain('div', {'id': 'content_h'})
-            html = soup(raw_site, 'html.parser', parse_only=only_id_content_h)
+            lyrics_soup = soup(html, 'html.parser', parse_only=only_id_content_h)
 
-        __clean_html(website_code, html)
+        __clean_html(website_code, lyrics_soup)
 
-        lyrics.append(__read_text(html))
+        lyrics.append(__read_text(lyrics_soup))
 
         done = int((index+1)/len(links)*100)
         stdout.write('Progress: %d%%   %s' % (done, '\r'))
@@ -146,10 +148,6 @@ This process may take several minutes, depending on the number of songs being re
     __write_text(lyrics, band_name)
 
 
-def __get_lyrics_lyricsfreak(website_code, links, band_name):
-    pass
-
-
 def __clean_html(website_code, html):
     """Wrapper function that runs appropriate __clean_html_ function on
     BeautifulSoup object based on given website_code"""
@@ -157,8 +155,6 @@ def __clean_html(website_code, html):
         __clean_html_darklyrics(html)
     elif website_code == 'lf':
         __clean_html_lyricsfreak(html)
-    else:
-        print('Unrecognized website code\n')
 
 
 def __clean_html_darklyrics(html):
@@ -209,7 +205,7 @@ def __read_text(html):
 def __write_text(lyrics, band_name):
     """Write lyrics to band_namelyrics.txt in the original_lyrics folder"""
 
-    curr_dir = dirname(__file__)
+    curr_dir = directories.get_script_path()
     filename = ''.join((curr_dir, '/original_lyrics/', band_name, 'lyrics.txt'))
     lyrics_string = ' '.join(lyrics)
 
