@@ -13,21 +13,20 @@ from time import sleep
 import directories
 
 
-def set_band(website_code):
+def set_band():
     """Takes band name as user input and returns tuple containing the name
-    formatted for use in a url of the site specified by website code"""
+    formatted for use in urls for different sites"""
 
     band_name = input('Enter the name of the band: ')
     print()
 
     if band_name:
-        if website_code == 'dl':  # darklyrics.com
-            band_name = re.sub('[^a-zA-Z0-9]+', '', band_name).lower()
-        elif website_code == 'lf':  # lyricsfreak.com
-            band_name = re.sub('[^a-zA-Z0-9 ]+', '', band_name).strip()
-            band_name = re.sub('[ ]+', '+', band_name).lower()
+        band_name_nospace = re.sub('[^a-zA-Z0-9]+', '', band_name).lower()  # for azlyrics and darklyrics
 
-        return band_name
+        band_name_plus = re.sub('[^a-zA-Z0-9 ]+', '', band_name).strip()  # for lyricsfreak
+        band_name_plus = re.sub('[ ]+', '+', band_name_plus).lower()
+
+        return band_name_nospace, band_name_plus
     else:
         return ''
 
@@ -38,7 +37,9 @@ def build_url(website_code, band_name):
 
     url = None
 
-    if website_code == 'dl':
+    if website_code == 'az':
+        url = ''.join(['http://www.azlyrics.com/', band_name[0], '/', band_name, '.html'])
+    elif website_code == 'dl':
         url = ''.join(['http://www.darklyrics.com/', band_name[0], '/', band_name, '.html'])
     elif website_code == 'lf':
         url = ''.join(['http://www.lyricsfreak.com/', band_name[0], '/', band_name, '/'])
@@ -55,7 +56,7 @@ def url_check(url):
         if site_ping.status_code < 400:
             return True
         else:
-            print('Could not find file or connect to url. Make sure band name entered properly, \
+            print('Could not connect to url. Make sure band name entered properly, \
 or that the band has a page on the website selected.\n')
             return False
     except TypeError:
@@ -68,7 +69,9 @@ def get_links(website_code, url):
     html = urlreq.urlopen(urlreq.Request(url, headers=user_agent))
 
     album_links = None
-    if website_code == 'dl':
+    if website_code == 'az':
+        album_links = __get_links_azlyrics(html)
+    elif website_code == 'dl':
         album_links = __get_links_darklyrics(html)
     elif website_code == 'lf':
         album_links = __get_links_lyricsfreak(html)
@@ -81,6 +84,21 @@ def get_links(website_code, url):
         return album_links
 
 
+def __get_links_azlyrics(html):
+    """Parses html from opened lyricsfreak.com page,
+    and returns a list of urls for all pages containing lyrics"""
+
+    only_links = strain('div', attrs={'id': 'listAlbum'})
+    link_soup = soup(html, 'html.parser', from_encoding='utf-8', parse_only=only_links)
+    album_a = link_soup.find_all('a', attrs={'id': None})
+
+    album_links = []
+    for a in album_a:
+        album_links.append(a['href'].replace('..', 'http://www.azlyrics.com'))
+
+    return album_links
+
+
 def __get_links_darklyrics(html):
     """Parses html from opened lyricsfreak.com page,
     and returns a list of urls for all pages containing lyrics"""
@@ -91,7 +109,7 @@ def __get_links_darklyrics(html):
 
     album_links = []
     for a in album_a:
-        album_links.append(a['href'].replace('..', 'http://darklyrics.com'))
+        album_links.append(a['href'].replace('..', 'http://www.darklyrics.com'))
 
     return album_links
 
@@ -129,7 +147,10 @@ This process may take several minutes, depending on the number of songs being re
     for index, link in enumerate(links):
         html = urlreq.urlopen(urlreq.Request(link, headers=user_agent))
 
-        if website_code == 'dl':
+        if website_code == 'az':
+            only_class_id_none = strain('div', attrs={'class': None, 'id': None})
+            lyrics_soup = soup(html, 'html.parser', parse_only=only_class_id_none)
+        elif website_code == 'dl':
             only_class_album = strain('div', {'class': 'album'})
             lyrics_soup = soup(html, 'html.parser', parse_only=only_class_album)
         elif website_code == 'lf':
@@ -145,16 +166,30 @@ This process may take several minutes, depending on the number of songs being re
         stdout.flush()
         sleep(random.uniform(3.0, 5.0))
 
-    __write_text(lyrics, band_name)
+    __write_text(lyrics, band_name[0])
 
 
 def __clean_html(website_code, html):
     """Wrapper function that runs appropriate __clean_html_ function on
     BeautifulSoup object based on given website_code"""
-    if website_code == 'dl':
+
+    if website_code == 'az':
+        __clean_html_azlyrics(html)
+    elif website_code == 'dl':
         __clean_html_darklyrics(html)
     elif website_code == 'lf':
         __clean_html_lyricsfreak(html)
+
+
+def __clean_html_azlyrics(html):
+    """Removes undesired tags and associated contents from azlyrics.com
+    html, leaving only the text of the lyrics"""
+
+    for i in html('i'):
+        i.decompose()
+
+    for br in html.find_all('br'):
+        br.replace_with('')
 
 
 def __clean_html_darklyrics(html):
