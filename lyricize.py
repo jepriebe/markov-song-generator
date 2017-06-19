@@ -101,7 +101,7 @@ def save_song(dir, artist, song):
             song_title = input('Enter a song title: ')
             print()
 
-            filefolder = ''.join((dir, '/user_songs/', artist))
+            filefolder = ''.join((dir, '/user_songs/', artist[0]))
             if not isdir(filefolder):
                 makedirs(filefolder)
 
