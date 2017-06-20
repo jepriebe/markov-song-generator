@@ -9,6 +9,58 @@ from os.path import isdir, exists, dirname
 from os import makedirs
 
 
+def set_length_parameters():
+    """Sets the minimum and maximum line length to use in lyricize(),
+    as well as the maximum song length to be used in cc_markov.generate text"""
+
+    while True:
+        try:
+            max_song_length = int(input('Enter maximum song length in # of words: '))
+            print()
+
+            if max_song_length <= 0:
+                print('Maximum song length must be greater than 0\n')
+                continue
+            else:
+                break
+        except ValueError:
+            print('Input must be a positive integer')
+            continue
+
+    while True:
+        try:
+            min_line_length = int(input('Enter minimum line length in # of words: '))
+            print()
+
+            if min_line_length <= 0:
+                print('Minimum line length must be greater than 0\n')
+                continue
+            else:
+                break
+        except ValueError:
+            print('Input must be a positive integer\n')
+            continue
+
+    while True:
+        try:
+            max_line_length = int(input('Enter maximum line length in # of words: '))
+            print()
+
+            if max_line_length <= 0:
+                print('Maximum line length must be greater than 0\n')
+                continue
+            elif max_line_length < min_line_length:
+                print('Maximum line length must be greater than or equal to minimum\n')
+                continue
+            else:
+                break
+        except ValueError:
+            print('Input must be a positive integer\n')
+            continue
+
+    return max_song_length, min_line_length, max_line_length
+
+
 def __get_truncated_normal(mean=0.0, sd=1, low=1, upp=8):
     """Re-parameterize the truncnorm function in scipy.stats"""
     return truncnorm((low - mean) / sd, (upp - mean) / sd, loc=mean, scale=sd)
