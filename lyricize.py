@@ -1,6 +1,7 @@
-"""TODO: shift prepositions and articles and such onto next line,
-or pull from next line, remove extra newlines, delete hanging preps
-and articles from last line"""
+"""
+Contains functions to take raw, unformatted text and format it to resemble
+the lyrics of a song, as well as save the new text to a file
+"""
 
 from scipy.stats import truncnorm
 from math import floor
@@ -10,73 +11,83 @@ from os import makedirs
 
 
 def set_length_parameters():
-    """Sets the minimum and maximum line length to use in lyricize(),
-    as well as the maximum song length to be used in cc_markov.generate text"""
+    """
+    Returns integers for the minimum and maximum line length to use in lyricize(),
+    as well as the maximum song length to be used in cc_markov.generate text
+    """
 
     while True:
         try:
             max_song_length = int(input('Enter maximum song length in # of words: '))
             print()
-
-            if max_song_length <= 0:
-                print('Maximum song length must be greater than 0\n')
-                continue
-            else:
-                break
         except ValueError:
             print('Input must be a positive integer')
             continue
+
+        if max_song_length <= 0:
+            print('Maximum song length must be greater than 0\n')
+            continue
+        else:
+            break
 
     while True:
         try:
             min_line_length = int(input('Enter minimum line length in # of words: '))
             print()
-
-            if min_line_length <= 0:
-                print('Minimum line length must be greater than 0\n')
-                continue
-            else:
-                break
         except ValueError:
             print('Input must be a positive integer\n')
             continue
+
+        if min_line_length <= 0:
+            print('Minimum line length must be greater than 0\n')
+            continue
+        else:
+            break
 
     while True:
         try:
             max_line_length = int(input('Enter maximum line length in # of words: '))
             print()
-
-            if max_line_length <= 0:
-                print('Maximum line length must be greater than 0\n')
-                continue
-            elif max_line_length < min_line_length:
-                print('Maximum line length must be greater than or equal to minimum\n')
-                continue
-            else:
-                break
         except ValueError:
             print('Input must be a positive integer\n')
             continue
 
+        if max_line_length <= 0:
+            print('Maximum line length must be greater than 0\n')
+            continue
+        elif max_line_length < min_line_length:
+            print('Maximum line length must be greater than or equal to minimum\n')
+            continue
+        else:
+            break
+
     return max_song_length, min_line_length, max_line_length
 
 
-def __get_truncated_normal(mean=0.0, sd=1, low=1, upp=8):
-    """Re-parameterize the truncnorm function in scipy.stats"""
+def _get_truncated_normal(mean=0.0, sd=1, low=1, upp=8):
+    """
+    Re-parameterize the truncnorm function from scipy.stats;
+    return random value from normal probability curve given mean,
+    standard deviation, and lower and upper bounds
+    """
     return truncnorm((low - mean) / sd, (upp - mean) / sd, loc=mean, scale=sd)
 
 
-def __fix_lines(lyrics, max_words):
-    """There some words you just don't put at the end of a line in a song.
+def _fix_lines(lyrics, max_words):
+    """
+    There some words you just don't put at the end of a line in a song.
     Uses user-defined list in non-terminal-words.txt to move these words
     from the end of one line to the start of the next, or remove them if
-    it is the last line. Returns a list of strings."""
+    it is the last line. Takes the raw lyrics text and integer for max
+    number of words allowed on a line. Returns a list of strings.
+    """
 
     word_file = ''.join([dirname(__file__), '/non_terminal_words.txt'])
     non_terminal_words = []
     try:
         with open(word_file, 'r') as wf:
-            non_terminal_words = [line[1:] for line in wf.read().splitlines() if line and line[0] == '#']
+            non_terminal_words = [line[1:] for line in wf.read().splitlines()
+                                  if line and line[0] == '#']
 
     except OSError:
         print('Could not find non_terminal_words.txt\n')
@@ -112,18 +123,22 @@ def __fix_lines(lyrics, max_words):
 
 
 def lyricize(raw_lyrics, min_words=1, max_words=8):
-    """randomly selects current line length based on given range and
+    """
+    Randomly selects current line length based on given range and
     probability distribution. Create line by popping left specified
     number of words from raw lyrics and appending them to line deque,
     then append line to list. Create new lines until no words left,
-    then __fix_lines. Returns a string."""
+    then _fix_lines. Takes raw lyrics and min and max line lengths.
+    Returns a string.
+    """
 
     clean_lyrics = []
     words_left = len(raw_lyrics)
 
     try:
         while words_left > 0:
-            curr_line_length = floor(__get_truncated_normal(0.7*max_words, 1, min_words, max_words+1).rvs(1))
+            curr_line_length = floor(_get_truncated_normal(0.7 * max_words, 1, min_words,
+                                                           max_words + 1).rvs(1))
 
             if curr_line_length > words_left:
                 curr_line_length = words_left
@@ -139,13 +154,17 @@ def lyricize(raw_lyrics, min_words=1, max_words=8):
     except IndexError:
         pass
 
-    clean_lyrics = __fix_lines(clean_lyrics, max_words)
+    clean_lyrics = _fix_lines(clean_lyrics, max_words)
 
     return '\n'.join(clean_lyrics)
 
 
 def save_song(dir, artist, song):
-    """Saves current lyrics as text file inside a user_songs folder"""
+    """
+    Saves current lyrics as text file inside a user_songs folder.
+    Takes directory of script, and strings for artist name and song
+    text to be saved.
+    """
 
     while True:
         try:

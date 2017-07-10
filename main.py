@@ -1,7 +1,10 @@
 """
-TODO:
-- add choices for max line length and max word count of generated songs
-- add options to choose a different website or band without restarting program
+Main script to run Markov lyrics generator. User provides band name.
+If no lyrics file exists, website code is used to fetch lyrics from
+selected lyrics website, parse the lyrics into text, and save them
+in a text file for future use. This file is used to generate new
+lyrics using a Markov Chain, which are then formatted to look like
+song lyrics and saved if desired.
 """
 
 import fetch_data
@@ -14,7 +17,8 @@ import re
 
 
 def main():
-    while True:
+    """Main function to take user input and execute program in command line."""
+    while True:  # while loop to handle getting a band's lyrics
         band_name = fetch_data.set_band()
 
         if band_name:
@@ -60,7 +64,7 @@ def main():
                         break
                     except IOError:
                         print('Could not connect to url. Make sure band name entered properly, \
-    or that the band has a page on the website selected.\n')
+or that the band has a page on the website selected.\n')
                         continue
                 else:
                     if fetch_data.url_check(url):
@@ -79,13 +83,13 @@ def main():
 
     max_song_length, min_line_length, max_line_length = lyricize.set_length_parameters()
 
-    while True:
+    while True:  # while loop to handle generation of new song lyrics
         markov_song = lyrics_markov.generate_text(max_song_length)
         markov_song = lyricize.lyricize(markov_song, min_line_length, max_line_length)
 
         print(markov_song)
 
-        while True:
+        while True:  # internal loop to handle user option selection
             print('\n(S = Save, X = Exit, R = Reset, A = Adjust maximum line and song length; \
 Pressing Enter continues without saving)\nSX, SR, and SA are valid combinations')
             option = input('Select an option: ')

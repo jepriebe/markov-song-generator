@@ -1,6 +1,8 @@
-"""This program fetches html songs for a band on the specified lyrics website,
+"""
+This program fetches html songs for a band on the specified lyrics website,
 parses out the text of the lyrics, and writes a txt file containing lyrics for
-use in a Markov Chain lyric generator"""
+use in a Markov Chain lyric generator
+"""
 
 import random
 from sys import stdout
@@ -14,8 +16,10 @@ import directories
 
 
 def set_band():
-    """Takes band name as user input and returns tuple containing the name
-    formatted for use in urls for different sites"""
+    """
+    Takes band name as user input and returns tuple containing the name
+    formatted for use in urls for different sites
+    """
 
     band_name = input('Enter the name of the band: ')
     print()
@@ -32,8 +36,10 @@ def set_band():
 
 
 def build_url(website_code, band_name):
-    """Builds and returns url string based on website code and
-    band_name tuple returned from set_band()"""
+    """
+    Builds and returns url string based on website code and
+    band_name tuple returned from set_band()
+    """
 
     url = None
 
@@ -48,8 +54,10 @@ def build_url(website_code, band_name):
 
 
 def url_check(url):
-    """Checks to make sure site exists;
-    Returns True if status code < 400, False otherwise"""
+    """
+    Checks to make sure site at url exists;
+    Returns True if status code < 400, False otherwise
+    """
 
     try:
         site_ping = head(url)
@@ -64,76 +72,89 @@ or that the band has a page on the website selected.\n')
 
 
 def get_links(website_code, url):
-    """Opens artist page on lyricsfreak.com for band specified"""
+    """
+    Fetches html from url given;
+    Uses website_code to select appropriate _get_links_ function;
+    Returns a list of links to pages containing lyrics for a band
+    """
     user_agent = {'User-Agent': 'Mozilla/5.0 (Windows NT 6.1; WOW64; rv:40.0) Gecko/20100101 Firefox/40.1'}
     html = urlreq.urlopen(urlreq.Request(url, headers=user_agent))
 
-    album_links = None
+    lyrics_links = None
     if website_code == 'az':
-        album_links = __get_links_azlyrics(html)
+        lyrics_links = _get_links_azlyrics(html)
     elif website_code == 'dl':
-        album_links = __get_links_darklyrics(html)
+        lyrics_links = _get_links_darklyrics(html)
     elif website_code == 'lf':
-        album_links = __get_links_lyricsfreak(html)
+        lyrics_links = _get_links_lyricsfreak(html)
 
-    try:
-        album_links = choice(album_links, len(album_links), replace=False)
+    try:  # Randomize order of links to avoid sequential link access
+        lyrics_links = choice(lyrics_links, len(lyrics_links), replace=False)
     except TypeError:
         print('Failed to get links\n')
     else:
-        return album_links
+        return lyrics_links
 
 
-def __get_links_azlyrics(html):
-    """Parses html from opened lyricsfreak.com page,
-    and returns a list of urls for all pages containing lyrics"""
+def _get_links_azlyrics(html):
+    """
+    Parses given html from opened lyricsfreak.com page,
+    and returns a list of urls for all pages containing lyrics
+    """
 
     only_links = strain('div', attrs={'id': 'listAlbum'})
     link_soup = soup(html, 'html.parser', from_encoding='utf-8', parse_only=only_links)
-    album_a = link_soup.find_all('a', attrs={'id': None})
+    lyrics_a = link_soup.find_all('a', attrs={'id': None})
 
-    album_links = []
-    for a in album_a:
-        album_links.append(a['href'].replace('..', 'http://www.azlyrics.com'))
+    lyrics_links = []
+    for a in lyrics_a:
+        lyrics_links.append(a['href'].replace('..', 'http://www.azlyrics.com'))
 
-    return album_links
+    return lyrics_links
 
 
-def __get_links_darklyrics(html):
-    """Parses html from opened lyricsfreak.com page,
-    and returns a list of urls for all pages containing lyrics"""
+def _get_links_darklyrics(html):
+    """
+    Parses given html from opened lyricsfreak.com page,
+    and returns a list of urls for all pages containing lyrics
+    """
 
     only_links = strain('div', {'class': 'album'})
     link_soup = soup(html, 'html.parser', from_encoding='utf-8', parse_only=only_links)
-    album_a = [div.a for div in link_soup]
+    lyrics_a = [div.a for div in link_soup]
 
-    album_links = []
-    for a in album_a:
-        album_links.append(a['href'].replace('..', 'http://www.darklyrics.com'))
+    lyrics_links = []
+    for a in lyrics_a:
+        lyrics_links.append(a['href'].replace('..', 'http://www.darklyrics.com'))
 
-    return album_links
+    return lyrics_links
 
 
-def __get_links_lyricsfreak(html):
-    """Parses html from opened lyricsfreak.com page,
-    and returns a list of urls for all pages containing lyrics"""
+def _get_links_lyricsfreak(html):
+    """
+    Parses given html from opened lyricsfreak.com page,
+    and returns a list of urls for all pages containing lyrics
+    """
 
     only_links = strain('table', {'name': 'song'})
     link_soup = soup(html, 'html.parser', from_encoding='utf-8', parse_only=only_links)
-    album_a = link_soup.find('tbody').find_all('a')
+    lyrics_a = link_soup.find('tbody').find_all('a')
 
-    album_links = []
-    for a in album_a:
+    lyrics_links = []
+    for a in lyrics_a:
         a = ''.join(('http://www.lyricsfreak.com', a['href']))
-        album_links.append(a)
+        lyrics_links.append(a)
 
-    return album_links
+    return lyrics_links
 
 
 def get_lyrics(website_code, links, band_name):
-    """Iterates through a randomized list of links (provided by get_links),
-    opens each url in sequence, and saves a cleaned string of the lyrics
-    to a text file. Website code dictates how html is parsed."""
+    """
+    Iterates through a randomized list of links (provided by get_links)
+    to a bands lyrics pages, opens each url in sequence,
+    and saves a cleaned string of the lyrics to a text file.
+    Website code dictates how html is parsed.
+    """
 
     print('There is a delay between url requests to reduce risk of IP being blocked.\n\
 This process may take several minutes, depending on the number of songs being retrieved.\n')
@@ -157,33 +178,37 @@ This process may take several minutes, depending on the number of songs being re
             only_id_content_h = strain('div', {'id': 'content_h'})
             lyrics_soup = soup(html, 'html.parser', parse_only=only_id_content_h)
 
-        __clean_html(website_code, lyrics_soup)
+        _clean_html(website_code, lyrics_soup)
 
-        lyrics.append(__read_text(lyrics_soup))
+        lyrics.append(_read_text(lyrics_soup))
 
         done = int((index+1)/len(links)*100)
         stdout.write('Progress: %d%%   %s' % (done, '\r'))
         stdout.flush()
         sleep(random.uniform(3.0, 5.0))
 
-    __write_text(lyrics, band_name[0])
+    _write_text(lyrics, band_name[0])
 
 
-def __clean_html(website_code, html):
-    """Wrapper function that runs appropriate __clean_html_ function on
-    BeautifulSoup object based on given website_code"""
+def _clean_html(website_code, html):
+    """
+    Wrapper function that runs appropriate _clean_html_ function on
+    BeautifulSoup object based on given website_code
+    """
 
     if website_code == 'az':
-        __clean_html_azlyrics(html)
+        _clean_html_azlyrics(html)
     elif website_code == 'dl':
-        __clean_html_darklyrics(html)
+        _clean_html_darklyrics(html)
     elif website_code == 'lf':
-        __clean_html_lyricsfreak(html)
+        _clean_html_lyricsfreak(html)
 
 
-def __clean_html_azlyrics(html):
-    """Removes undesired tags and associated contents from azlyrics.com
-    html, leaving only the text of the lyrics"""
+def _clean_html_azlyrics(html):
+    """
+    Removes undesired tags and associated contents from azlyrics.com
+    html, leaving only the text of the lyrics
+    """
 
     for i in html('i'):
         i.decompose()
@@ -192,9 +217,11 @@ def __clean_html_azlyrics(html):
         br.replace_with('')
 
 
-def __clean_html_darklyrics(html):
-    """Removes undesired tags and associated contents from darklyrics.com
-    html, leaving only the text of the lyrics"""
+def _clean_html_darklyrics(html):
+    """
+    Removes undesired tags and associated contents from darklyrics.com
+    html, leaving only the text of the lyrics
+    """
 
     for h3 in html('h3'):
         h3.decompose()
@@ -213,18 +240,22 @@ def __clean_html_darklyrics(html):
         html.a.decompose()
 
 
-def __clean_html_lyricsfreak(html):
-    """Removes undesired tags and associated contents from lyricsfreak.com
-    html, leaving only the text of the lyrics"""
+def _clean_html_lyricsfreak(html):
+    """R
+    emoves undesired tags and associated contents from lyricsfreak.com
+    html, leaving only the text of the lyrics
+    """
 
     for br in html.find_all('br'):
         br.replace_with(' ')
 
 
-def __read_text(html):
-    """Takes cleaned up html text in a BeautifulSoup object, appends
+def _read_text(html):
+    """
+    Takes cleaned up html text in a BeautifulSoup object, appends
     lines to a list, removes any empty strings, and returns a string
-    containing all lyrics"""
+    containing all lyrics
+    """
 
     lyric_list = []
 
@@ -237,7 +268,7 @@ def __read_text(html):
     return lyrics_string
 
 
-def __write_text(lyrics, band_name):
+def _write_text(lyrics, band_name):
     """Write lyrics to band_namelyrics.txt in the original_lyrics folder"""
 
     curr_dir = directories.get_script_path()
